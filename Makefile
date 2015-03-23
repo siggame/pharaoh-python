@@ -6,7 +6,7 @@ submit: libclient.so
 
 libclient.so: library/*.cpp library/*.h
 	$(MAKE) -C library/ libclient.so
-	cp library/libclient.so client.dll
+	cp library/libclient.so libclient.so
 
 
 clean:
