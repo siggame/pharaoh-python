@@ -24,6 +24,12 @@ class Pyramid(object):
 
     self.tiles[tile.x - self.x_adj][tile.y] = tile
 
+  def itertiles(self):
+    for row in self.tiles:
+      for tile in row:
+        yield tile
+
+  # real tile locations provided
   def spawnThief(self, x, y, type):
     self.intruder.purchaseThief(x, y, type)
 
@@ -85,13 +91,18 @@ class Pyramid(object):
     invalid = []
     for coords, thieves in self.thieves.iteritems():
       for i, thief in enumerate(thieves):
-        if not thief.valid:
+        if not thief.valid or not thief.thief.alive:
           self.thiefCount[thief.thiefType] -= 1
           invalid.append(i)
       while(invalid):
         del self.thieves[coords][invalid.pop()]
   
-  def addTrap(self, trap):
+  # real tile locations provided
+  def placeTrap(self, x, y, type):
+    self.player.placeTrap(x, y, type)
+
+
+  def initTrap(self, trap):
     self.traps[(trap.x - self.x_adj, trap.y)] = trap
     if trap.trapType == 0:
       self.sarcophagus = (trap.x - self.x_adj, trap.y)

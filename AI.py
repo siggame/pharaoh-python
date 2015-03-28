@@ -4,6 +4,7 @@ from GameObject import *
 from pyramid import Pyramid
 from thief import Thief
 from tile import Tile
+import random
 
 BOMBER, DIGGER, NINJA, GUIDE, SLAVE = xrange(5)
 SARCOPHAGUS, SNAKES, SWINGING, BOULDER, SPIDER, SAND, OIL, ARROW, WIRE, MERCURY, MUMMY, FAKE = xrange(12)
@@ -87,9 +88,9 @@ class AI(BaseAI):
     self.enemy_pyramid.traps = {}
     for trap in self.traps:
       if trap.owner == self.playerID:
-        self.my_pyramid.addTrap(trap)
+        self.my_pyramid.initTrap(trap)
       else:
-        self.enemy_pyramid.addTrap(trap)
+        self.enemy_pyramid.initTrap(trap)
 
   def loadThieves(self):
     self.my_pyramid.reset()
@@ -132,6 +133,20 @@ class AI(BaseAI):
       print("NEW ROUND")
       self.reset()
       self.my_pyramid.display()
+      tiles = [t for t in self.my_pyramid.itertiles()]
+      scarabs = self.scarabsForTraps  
+      while(scarabs >= 50):
+        tile = tiles[random.randint(0, len(tiles)-1)]
+        randtype = random.choice(range(12))
+        if randtype == OIL:
+          # dont feel like placing these
+          continue
+        cost = self.trapTypes[randtype].cost
+        if cost <= scarabs and tile.empty and not tile.trap:
+          self.my_pyramid.placeTrap(tile.x, tile.y, randtype)
+          scarabs -= cost
+      print("Traps set")
+
       # trap placement
       return 1
 

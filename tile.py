@@ -9,5 +9,6 @@ class Tile(object):
     self.spawn = tile.type == SPAWN
     self.empty = tile.type == EMPTY
     self.wall = tile.type == WALL
+    self.trap = None
 
 
