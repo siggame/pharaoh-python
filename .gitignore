@@ -1,6 +1,0 @@
-*.pyc
-*.dll
-*.so
-library/*
-*.gamelog
-*.glog
