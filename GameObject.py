@@ -88,6 +88,14 @@ class Player(GameObject):
   ##The number of rounds won by this player.
   roundsWon = property(getRoundsWon)
 
+  #\cond
+  def getSarcophagiCaptured(self):
+    self.validify()
+    return library.playerGetSarcophagiCaptured(self._ptr)
+  #\endcond
+  ##The number of sarcophagi captured by this player this round.
+  sarcophagiCaptured = property(getSarcophagiCaptured)
+
 
   def __str__(self):
     self.validify()
@@ -97,6 +105,7 @@ class Player(GameObject):
     ret += "time: %s\n" % self.getTime()
     ret += "scarabs: %s\n" % self.getScarabs()
     ret += "roundsWon: %s\n" % self.getRoundsWon()
+    ret += "sarcophagiCaptured: %s\n" % self.getSarcophagiCaptured()
     return ret
 
 ##A mappable object!
