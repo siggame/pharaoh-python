@@ -2,7 +2,9 @@
 from BaseAI import BaseAI
 from GameObject import *
 import random
+import copy
 import collections
+from sets import Set
 
 class Point:
   x, y = None, None
@@ -149,10 +151,11 @@ class AI(BaseAI):
             #find a path from the thief's location to the enemy sarcophagus
             endX = enemySarcophagi[0].x
             endY = enemySarcophagi[0].y
-            path = self.findPath(Point(thief.x, thief.y), Point(endX, endY))
+            path = self.pathFind((thief.x, thief.y), (endX, endY))
             #if a path exists then move forward on the path
-            if len(path) > 0:
-              thief.move(path[0].x, path[0].y)
+            if path:
+              new = path.pop()
+              thief.move(new[0], new[1])
     #do things with traps now
     for trap in self.getMyTraps():
       xChange = [-1, 1, 0, 0]
@@ -293,7 +296,51 @@ class AI(BaseAI):
       toReturn.appendleft(Point(tile.x, tile.y))
       tile = parent[tile]
     return toReturn
+  
+  def neighbors(self, tile):
+      n = []
+      if tile[1] - 1 >= 0 and self.path(tile[0], tile[1] - 1, tile[0], tile[1]):
+        n.append((tile[0], tile[1] - 1))
+      if tile[1] + 1 < self.mapHeight and self.path(tile[0], tile[1] + 1, tile[0], tile[1]):
+        n.append((tile[0], tile[1] + 1))
+      if tile[0] - 1 >= 0 and self.path(tile[0] - 1, tile[1], tile[0], tile[1]):
+        n.append((tile[0] - 1, tile[1]))
+      if tile[0] + 1 < self.mapWidth and self.path(tile[0] + 1, tile[1], tile[0], tile[1]):
+        n.append((tile[0] + 1, tile[1]))
+      return n
+    
+  def pathFind(self, start, end):
+      Open = collections.deque()
+      Open.append(start)
+      Closed = Set(start)
+      parentMap = dict()
+      path = []
+      while Open:
+        current = Open.pop()
+        if current == end:
+          while current != start:
+            path.append(current)
+            current = parentMap[current]
+          return path
+        for neighbor in self.neighbors(current): 
+          if neighbor not in Closed:
+            parentMap[neighbor] = current
+            Closed.add((neighbor))
+            Open.appendleft((neighbor))
+      pass
 
+  def setEnds(self):
+    ends = collections.deque()
+    for trap in self.traps:
+      if trap.owner != self.playerID and trap.trapType == TrapType.SARCOPHAGUS:
+        ends.appendleft((trap.x, trap.y))
+    return ends
+
+  def path(self, x, y, startx, starty):
+      if x >= 0 and x < self.mapWidth and y >= 0 and y < self.mapHeight:
+        if ((self.onMySide(startx)) == (self.onMySide(x))):
+          return self.tiles[x * self.mapHeight + y].type != Tile.WALL
+  
   me = None
 
 
