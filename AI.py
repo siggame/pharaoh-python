@@ -2,7 +2,6 @@
 from BaseAI import BaseAI
 from GameObject import *
 import random
-import copy
 import collections
 from sets import Set
 
@@ -169,7 +168,7 @@ class AI(BaseAI):
             enemyThief = self.getThief(trap.x + xChange[i], trap.y + yChange[i])
             #roll over the thief
             if enemyThief is not None:
-              trap.act(xChange[i], yChange[i])
+              trap.act(trap.x + xChange[i], trap.y + yChange[i])
               break
         elif trap.trapType == TrapType.MUMMY:
           #move around randomly if a mummy
