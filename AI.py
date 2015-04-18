@@ -33,6 +33,7 @@ class AI(BaseAI):
   ##This function is called each time it is your turn
   ##Return true to end your turn, return false to ask the server for updated information
   def run(self):
+    myScarabs = self.me.scarabs
     #lists for sarcophagi
     mySarcophagi = []
     newSarcophagiLocations = []
@@ -68,14 +69,16 @@ class AI(BaseAI):
             #make sure another can be spawned
             if trapCount[trapType] < self.trapTypes[trapType].maxInstances:
               #if there are enough scarabs
-              if self.me.scarabs >= self.trapTypes[trapType].cost:
+              if myScarabs >= self.trapTypes[trapType].cost:
                 #check if the tile is the right type
                 if self.trapTypes[trapType].canPlaceOnWalls and tile.type == Tile.WALL:
                   self.me.placeTrap(tile.x, tile.y, trapType)
                   trapCount[trapType] += 1
+                  myScarabs -= self.trapTypes[trapType].cost
                 elif not self.trapTypes[trapType].canPlaceOnWalls and tile.type == Tile.EMPTY:
                   self.me.placeTrap(tile.x, tile.y, trapType)
                   trapCount[trapType] += 1
+                  myScarabs -= self.trapTypes[trapType].cost
     #otherwise it's time to move and purchase
     else:
       #find my sarcophagi and the enemy scarcophagi
@@ -90,7 +93,7 @@ class AI(BaseAI):
       #select a random thief type
       thiefNo = random.randint(0, len(self.thiefTypes) - 1)
       #if you can afford the thief
-      if False and self.me.scarabs >= self.thiefTypes[thiefNo].cost:
+      if self.me.scarabs >= self.thiefTypes[thiefNo].cost:
         #make sure another can be spawned
         max = self.thiefTypes[thiefNo].maxInstances
         count = 0
