@@ -19,7 +19,7 @@ class BaseAI:
   mappables = []
   tiles = []
   traps = []
-  thiefs = []
+  thieves = []
   thiefTypes = []
   trapTypes = []
   #\cond
@@ -36,7 +36,7 @@ class BaseAI:
     BaseAI.mappables = [Mappable(library.getMappable(self.connection, i)) for i in xrange(library.getMappableCount(self.connection))]
     BaseAI.tiles = [Tile(library.getTile(self.connection, i)) for i in xrange(library.getTileCount(self.connection))]
     BaseAI.traps = [Trap(library.getTrap(self.connection, i)) for i in xrange(library.getTrapCount(self.connection))]
-    BaseAI.thiefs = [Thief(library.getThief(self.connection, i)) for i in xrange(library.getThiefCount(self.connection))]
+    BaseAI.thieves = [Thief(library.getThief(self.connection, i)) for i in xrange(library.getThiefCount(self.connection))]
     BaseAI.thiefTypes = [ThiefType(library.getThiefType(self.connection, i)) for i in xrange(library.getThiefTypeCount(self.connection))]
     BaseAI.trapTypes = [TrapType(library.getTrapType(self.connection, i)) for i in xrange(library.getTrapTypeCount(self.connection))]
 

@@ -374,7 +374,7 @@ class Thief(Mappable):
     #somewhere else in memory now
     if self._iteration == BaseAI.iteration:
       return True
-    for i in BaseAI.thiefs:
+    for i in BaseAI.thieves:
       if i._id == self._id:
         self._ptr = i._ptr
         self._iteration = BaseAI.iteration

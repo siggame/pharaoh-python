@@ -202,7 +202,7 @@ class AI(BaseAI):
   def getThief(self, x, y):
     if x < 0 or x >= self.mapWidth or y < 0 or y >= self.mapHeight:
       return None
-    for thief in self.thiefs:
+    for thief in self.thieves:
       if thief.x == x and thief.y == y:
         return thief
     return None
@@ -241,7 +241,7 @@ class AI(BaseAI):
   ##returns a list of all of your thieves
   def getMyThieves(self):
     toReturn = []
-    for thief in self.thiefs:
+    for thief in self.thieves:
       if thief.owner == self.playerID:
         toReturn.append(thief)
     return toReturn
@@ -249,7 +249,7 @@ class AI(BaseAI):
   ##returns a list of all of your enemy thieves
   def getEnemyThieves(self):
     toReturn = []
-    for thief in self.thiefs:
+    for thief in self.thieves:
       if thief.owner != self.playerID:
         toReturn.append(thief)
     return toReturn
