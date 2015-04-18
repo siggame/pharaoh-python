@@ -35,6 +35,7 @@ class AI(BaseAI):
   def run(self):
     #lists for sarcophagi
     mySarcophagi = []
+    newSarcophagiLocations = []
     enemySarcophagi = []
     #if it's tiem to place traps...
     if self.roundTurnNumber == 0 or self.roundTurnNumber == 1:
@@ -49,30 +50,32 @@ class AI(BaseAI):
         if self.onMySide(tile.x) and tile.type == Tile.EMPTY:
           #move my sarcophagus to that location
           self.me.placeTrap(tile.x, tile.y, TrapType.SARCOPHAGUS)
+          newSarcophagiLocations.append((tile.x, tile.y))
           sarcophagusCount -= 1
           if sarcophagusCount == 0:
             break
+          
       #make sure there aren't too many traps spawned
       trapCount = [0]*len(self.trapTypes)
       #continue spawning traps until there isn't money to spend
       for tile in self.tiles:
         #if the tile is on my side
         if self.onMySide(tile.x):
-          #make sure there isn't a trap on that tile
-            if self.getTrap(tile.x, tile.y) is None:
-              #select a random trap type (make sure it isn't a sarcophagus)
-              trapType = random.randint(1, len(self.trapTypes) - 1)
-              #make sure another can be spawned
-              if trapCount[trapType] < self.trapTypes[trapType].maxInstances:
-                #if there are enough scarabs
-                if self.me.scarabs >= self.trapTypes[trapType].cost:
-                  #check if the tile is the right type
-                  if self.trapTypes[trapType].canPlaceOnWalls and tile.type == Tile.WALL:
-                    self.me.placeTrap(tile.x, tile.y, trapType)
-                    trapCount[trapType] += 1
-                  elif not self.trapTypes[trapType].canPlaceOnWalls and tile.type == Tile.EMPTY:
-                    self.me.placeTrap(tile.x, tile.y, trapType)
-                    trapCount[trapType] += 1
+          #make sure there isn't a sarcophagus on that tile
+          if (tile.x, tile.y) not in newSarcophagiLocations:
+            #select a random trap type (make sure it isn't a sarcophagus)
+            trapType = random.randint(1, len(self.trapTypes) - 1)
+            #make sure another can be spawned
+            if trapCount[trapType] < self.trapTypes[trapType].maxInstances:
+              #if there are enough scarabs
+              if self.me.scarabs >= self.trapTypes[trapType].cost:
+                #check if the tile is the right type
+                if self.trapTypes[trapType].canPlaceOnWalls and tile.type == Tile.WALL:
+                  self.me.placeTrap(tile.x, tile.y, trapType)
+                  trapCount[trapType] += 1
+                elif not self.trapTypes[trapType].canPlaceOnWalls and tile.type == Tile.EMPTY:
+                  self.me.placeTrap(tile.x, tile.y, trapType)
+                  trapCount[trapType] += 1
     #otherwise it's time to move and purchase
     else:
       #find my sarcophagi and the enemy scarcophagi
@@ -87,7 +90,7 @@ class AI(BaseAI):
       #select a random thief type
       thiefNo = random.randint(0, len(self.thiefTypes) - 1)
       #if you can afford the thief
-      if self.me.scarabs >= self.thiefTypes[thiefNo].cost:
+      if False and self.me.scarabs >= self.thiefTypes[thiefNo].cost:
         #make sure another can be spawned
         max = self.thiefTypes[thiefNo].maxInstances
         count = 0
@@ -103,7 +106,7 @@ class AI(BaseAI):
           self.me.purchaseThief(spawnTile.x, spawnTile.y, thiefNo)
       #move my thieves
       for thief in self.getMyThieves():
-        #if the theif is alive and not frozen
+        #if the thief is alive and not frozen
         if thief.alive and thief.frozenTurnsLeft == 0:
           xChange = [-1, 1, 0, 0]
           yChange = [0, 0, -1, 1]
