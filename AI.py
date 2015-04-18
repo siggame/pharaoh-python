@@ -270,7 +270,7 @@ class AI(BaseAI):
     yChange = [-1, 1, 0, 0]
     #look in all directions
     for i in range(4):
-      if self.path(tile[0], tile[1], tile[0] + xChange[i], tile[1] + xChange[0]):
+      if self.path(tile[0], tile[1], tile[0] + xChange[i], tile[1] + yChange[i]):
         n.append((tile[0] + xChange[i], tile[1] + yChange[i]))
     return n
 
