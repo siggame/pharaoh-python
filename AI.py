@@ -257,89 +257,56 @@ class AI(BaseAI):
         toReturn.append(tile)
     return toReturn
 
-  ##returns a path from start to end, or nothing if no path is found.
-  def findPath(self, startPoint, endPoint):
-    toReturn = collections.deque()
-    #the set of open tiles to look at
-    openSet = collections.deque()
-    #points back to parent tile
-    parent = dict()
-    #push back the starting tile
-    openSet.append(self.getTile(startPoint.x, startPoint.y))
-    #the start tile has no parent
-    parent[self.getTile(startPoint.x, startPoint.y)] = None
-    #the end tile
-    endTile = self.getTile(endPoint.x, endPoint.y)
-    #as long as the end tile has no parent
-    while endTile not in parent:
-      #if there are no tiles in the openSet then there is no path
-      if len(openSet) == 0:
-        return toReturn
-      #check tiles from the front and remove it
-      curTile = openSet.pop()
-      xChange = [0, 0, -1, 1]
-      yChange = [-1, 1, 0, 0]
-      #look in all directions
-      for i in range(4):
-        loc = Point(curTile.x + xChange[i], curTile.y + yChange[i])
-        toAdd = self.getTile(loc.x, loc.y)
-        #if there's a tile there
-        if toAdd is not None:
-          #if it's an open tile and it doesn't have a parent
-          if toAdd.type == Tile.EMPTY and toAdd not in parent:
-            #add the tile to the open set; and mark its parent as the current tile
-            openSet.append(toAdd)
-            parent[toAdd] = curTile
-    #find the path back
-    tile = endTile
-    while parent[tile] is not None:
-      toReturn.appendleft(Point(tile.x, tile.y))
-      tile = parent[tile]
-    return toReturn
-  
+  #returns the coordinates for the adjacent empty tiles to a given point
   def neighbors(self, tile):
-      n = []
-      if tile[1] - 1 >= 0 and self.path(tile[0], tile[1] - 1, tile[0], tile[1]):
-        n.append((tile[0], tile[1] - 1))
-      if tile[1] + 1 < self.mapHeight and self.path(tile[0], tile[1] + 1, tile[0], tile[1]):
-        n.append((tile[0], tile[1] + 1))
-      if tile[0] - 1 >= 0 and self.path(tile[0] - 1, tile[1], tile[0], tile[1]):
-        n.append((tile[0] - 1, tile[1]))
-      if tile[0] + 1 < self.mapWidth and self.path(tile[0] + 1, tile[1], tile[0], tile[1]):
-        n.append((tile[0] + 1, tile[1]))
-      return n
-    
-  def pathFind(self, start, end):
-      Open = collections.deque()
-      Open.append(start)
-      Closed = Set(start)
-      parentMap = dict()
-      path = []
-      while Open:
-        current = Open.pop()
-        if current == end:
-          while current != start:
-            path.append(current)
-            current = parentMap[current]
-          return path
-        for neighbor in self.neighbors(current): 
-          if neighbor not in Closed:
-            parentMap[neighbor] = current
-            Closed.add((neighbor))
-            Open.appendleft((neighbor))
-      pass
+    n = []
+    xChange = [0, 0, -1, 1]
+    yChange = [-1, 1, 0, 0]
+    #look in all directions
+    for i in range(4):
+      if self.path(tile[0], tile[1], tile[0] + xChange[i], tile[1] + xChange[0]):
+        n.append((tile[0] + xChange[i], tile[1] + yChange[i]))
+    return n
 
-  def setEnds(self):
-    ends = collections.deque()
-    for trap in self.traps:
-      if trap.owner != self.playerID and trap.trapType == TrapType.SARCOPHAGUS:
-        ends.appendleft((trap.x, trap.y))
-    return ends
-
+  #make sure it's possible to get from point a to point b
   def path(self, x, y, startx, starty):
       if x >= 0 and x < self.mapWidth and y >= 0 and y < self.mapHeight:
         if ((self.onMySide(startx)) == (self.onMySide(x))):
+          #true if the tile is not a wall
           return self.tiles[x * self.mapHeight + y].type != Tile.WALL
+      return False
+
+  #find a path from start to end
+  def pathFind(self, start, end):
+    #the set of open tiles to look at
+    Open = collections.deque()
+    Closed = Set(start)
+    #points back to parent tile
+    parentMap = dict()
+    #push back the starting tile
+    Open.append(start)
+    path = []
+    #as long as there are more tiles to check
+    while Open:
+      current = Open.pop()
+      #if the current point is the desination
+      if current == end:
+        #we found a path!
+        while current != start:
+          path.append(current)
+          current = parentMap[current]
+        #return the path we found
+        return path
+      for neighbor in self.neighbors(current): 
+        if neighbor not in Closed:
+          #add the tile to the open set; and mark its parent as the current tile
+          parentMap[neighbor] = current
+          Closed.add((neighbor))
+          Open.appendleft((neighbor))
+    #if we reach here, no path was found
+    pass
+
+
   
   me = None
 
