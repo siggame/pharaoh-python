@@ -3,6 +3,7 @@ from BaseAI import BaseAI
 from GameObject import *
 import random
 import collections
+from sets import Set
 
 class Point:
   x, y = None, None
@@ -32,8 +33,10 @@ class AI(BaseAI):
   ##This function is called each time it is your turn
   ##Return true to end your turn, return false to ask the server for updated information
   def run(self):
+    myScarabs = self.me.scarabs
     #lists for sarcophagi
     mySarcophagi = []
+    newSarcophagiLocations = []
     enemySarcophagi = []
     #if it's tiem to place traps...
     if self.roundTurnNumber == 0 or self.roundTurnNumber == 1:
@@ -48,34 +51,34 @@ class AI(BaseAI):
         if self.onMySide(tile.x) and tile.type == Tile.EMPTY:
           #move my sarcophagus to that location
           self.me.placeTrap(tile.x, tile.y, TrapType.SARCOPHAGUS)
+          newSarcophagiLocations.append((tile.x, tile.y))
           sarcophagusCount -= 1
           if sarcophagusCount == 0:
             break
+          
       #make sure there aren't too many traps spawned
       trapCount = [0]*len(self.trapTypes)
       #continue spawning traps until there isn't money to spend
       for tile in self.tiles:
         #if the tile is on my side
         if self.onMySide(tile.x):
-          #make sure there isn't a trap on that tile
-          if self.getTrap(tile.x, tile.y) is not None:
-            continue
-          #select a random trap type (make sure it isn't a sarcophagus)
-          trapType = random.randint(1, len(self.trapTypes) - 1)
-          #make sure another can be spawned
-          if trapCount[trapType] < self.trapTypes[trapType].maxInstances:
-            continue
-          #if there are enough scarabs
-          if self.me.scarabs >= self.trapTypes[trapType].cost:
-            #check if the tile is the right type
-            if self.trapTypes[trapType].canPlaceOnWalls and tile.type == Tile.WALL:
-              self.me.placeTrap(tile.x, tile.y, trapType)
-              trapCount[trapType] += 1
-            elif not self.trapTypes[trapType].canPlaceOnWalls and tile.type == Tile.EMPTY:
-              self.me.placeTrap(tile.x, tile.y, trapType)
-              trapCount[trapType] += 1
-          else:
-            break
+          #make sure there isn't a sarcophagus on that tile
+          if (tile.x, tile.y) not in newSarcophagiLocations:
+            #select a random trap type (make sure it isn't a sarcophagus)
+            trapType = random.randint(1, len(self.trapTypes) - 1)
+            #make sure another can be spawned
+            if trapCount[trapType] < self.trapTypes[trapType].maxInstances:
+              #if there are enough scarabs
+              if myScarabs >= self.trapTypes[trapType].cost:
+                #check if the tile is the right type
+                if self.trapTypes[trapType].canPlaceOnWalls and tile.type == Tile.WALL:
+                  self.me.placeTrap(tile.x, tile.y, trapType)
+                  trapCount[trapType] += 1
+                  myScarabs -= self.trapTypes[trapType].cost
+                elif not self.trapTypes[trapType].canPlaceOnWalls and tile.type == Tile.EMPTY:
+                  self.me.placeTrap(tile.x, tile.y, trapType)
+                  trapCount[trapType] += 1
+                  myScarabs -= self.trapTypes[trapType].cost
     #otherwise it's time to move and purchase
     else:
       #find my sarcophagi and the enemy scarcophagi
@@ -106,7 +109,7 @@ class AI(BaseAI):
           self.me.purchaseThief(spawnTile.x, spawnTile.y, thiefNo)
       #move my thieves
       for thief in self.getMyThieves():
-        #if the theif is alive and not frozen
+        #if the thief is alive and not frozen
         if thief.alive and thief.frozenTurnsLeft == 0:
           xChange = [-1, 1, 0, 0]
           yChange = [0, 0, -1, 1]
@@ -153,10 +156,11 @@ class AI(BaseAI):
             #find a path from the thief's location to the enemy sarcophagus
             endX = enemySarcophagi[0].x
             endY = enemySarcophagi[0].y
-            path = self.findPath(Point(thief.x, thief.y), Point(endX, endY))
+            path = self.pathFind((thief.x, thief.y), (endX, endY))
             #if a path exists then move forward on the path
-            if len(path) > 0:
-              thief.move(path[0].x, path[0].y)
+            if path:
+              new = path.pop()
+              thief.move(new[0], new[1])
     #do things with traps now
     for trap in self.getMyTraps():
       xChange = [-1, 1, 0, 0]
@@ -170,7 +174,7 @@ class AI(BaseAI):
             enemyThief = self.getThief(trap.x + xChange[i], trap.y + yChange[i])
             #roll over the thief
             if enemyThief is not None:
-              trap.act(xChange[i], yChange[i])
+              trap.act(trap.x + xChange[i], trap.y + yChange[i])
               break
         elif trap.trapType == TrapType.MUMMY:
           #move around randomly if a mummy
@@ -258,46 +262,57 @@ class AI(BaseAI):
         toReturn.append(tile)
     return toReturn
 
-  ##returns a path from start to end, or nothing if no path is found.
-  def findPath(self, startPoint, endPoint):
-    toReturn = collections.deque()
-    #the set of open tiles to look at
-    openSet = collections.deque()
-    #points back to parent tile
-    parent = dict()
-    #push back the starting tile
-    openSet.append(self.getTile(startPoint.x, startPoint.y))
-    #the start tile has no parent
-    parent[self.getTile(startPoint.x, startPoint.y)] = None
-    #the end tile
-    endTile = self.getTile(endPoint.x, endPoint.y)
-    #as long as the end tile has no parent
-    while endTile not in parent:
-      #if there are no tiles in the openSet then there is no path
-      if len(openSet) == 0:
-        return toReturn
-      #check tiles from the front and remove it
-      curTile = openSet.pop()
-      xChange = [0, 0, -1, 1]
-      yChange = [-1, 1, 0, 0]
-      #look in all directions
-      for i in range(4):
-        loc = Point(curTile.x + xChange[i], curTile.y + yChange[i])
-        toAdd = self.getTile(loc.x, loc.y)
-        #if there's a tile there
-        if toAdd is not None:
-          #if it's an open tile and it doesn't have a parent
-          if toAdd.type == Tile.EMPTY and toAdd not in parent:
-            #add the tile to the open set; and mark its parent as the current tile
-            openSet.append(toAdd)
-            parent[toAdd] = curTile
-    #find the path back
-    tile = endTile
-    while parent[tile] is not None:
-      toReturn.appendleft(Point(tile.x, tile.y))
-      tile = parent[tile]
-    return toReturn
+  #returns the coordinates for the adjacent empty tiles to a given point
+  def neighbors(self, tile):
+    n = []
+    xChange = [0, 0, -1, 1]
+    yChange = [-1, 1, 0, 0]
+    #look in all directions
+    for i in range(4):
+      if self.path(tile[0], tile[1], tile[0] + xChange[i], tile[1] + xChange[0]):
+        n.append((tile[0] + xChange[i], tile[1] + yChange[i]))
+    return n
 
+  #make sure it's possible to get from point a to point b
+  def path(self, x, y, startx, starty):
+      if x >= 0 and x < self.mapWidth and y >= 0 and y < self.mapHeight:
+        if ((self.onMySide(startx)) == (self.onMySide(x))):
+          #true if the tile is not a wall
+          return self.tiles[x * self.mapHeight + y].type != Tile.WALL
+      return False
+
+  #find a path from start to end
+  def pathFind(self, start, end):
+    #the set of open tiles to look at
+    Open = collections.deque()
+    Closed = Set(start)
+    #points back to parent tile
+    parentMap = dict()
+    #push back the starting tile
+    Open.append(start)
+    path = []
+    #as long as there are more tiles to check
+    while Open:
+      current = Open.pop()
+      #if the current point is the desination
+      if current == end:
+        #we found a path!
+        while current != start:
+          path.append(current)
+          current = parentMap[current]
+        #return the path we found
+        return path
+      for neighbor in self.neighbors(current): 
+        if neighbor not in Closed:
+          #add the tile to the open set; and mark its parent as the current tile
+          parentMap[neighbor] = current
+          Closed.add((neighbor))
+          Open.appendleft((neighbor))
+    #if we reach here, no path was found
+    pass
+
+
+  
   me = None
 
 
