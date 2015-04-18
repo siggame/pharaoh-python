@@ -58,24 +58,20 @@ class AI(BaseAI):
         #if the tile is on my side
         if self.onMySide(tile.x):
           #make sure there isn't a trap on that tile
-          if self.getTrap(tile.x, tile.y) is not None:
-            continue
-          #select a random trap type (make sure it isn't a sarcophagus)
-          trapType = random.randint(1, len(self.trapTypes) - 1)
-          #make sure another can be spawned
-          if trapCount[trapType] < self.trapTypes[trapType].maxInstances:
-            continue
-          #if there are enough scarabs
-          if self.me.scarabs >= self.trapTypes[trapType].cost:
-            #check if the tile is the right type
-            if self.trapTypes[trapType].canPlaceOnWalls and tile.type == Tile.WALL:
-              self.me.placeTrap(tile.x, tile.y, trapType)
-              trapCount[trapType] += 1
-            elif not self.trapTypes[trapType].canPlaceOnWalls and tile.type == Tile.EMPTY:
-              self.me.placeTrap(tile.x, tile.y, trapType)
-              trapCount[trapType] += 1
-          else:
-            break
+            if self.getTrap(tile.x, tile.y) is None:
+              #select a random trap type (make sure it isn't a sarcophagus)
+              trapType = random.randint(1, len(self.trapTypes) - 1)
+              #make sure another can be spawned
+              if trapCount[trapType] < self.trapTypes[trapType].maxInstances:
+                #if there are enough scarabs
+                if self.me.scarabs >= self.trapTypes[trapType].cost:
+                  #check if the tile is the right type
+                  if self.trapTypes[trapType].canPlaceOnWalls and tile.type == Tile.WALL:
+                    self.me.placeTrap(tile.x, tile.y, trapType)
+                    trapCount[trapType] += 1
+                  elif not self.trapTypes[trapType].canPlaceOnWalls and tile.type == Tile.EMPTY:
+                    self.me.placeTrap(tile.x, tile.y, trapType)
+                    trapCount[trapType] += 1
     #otherwise it's time to move and purchase
     else:
       #find my sarcophagi and the enemy scarcophagi
